@@ -1,5 +1,5 @@
 """
-The elib <edit> command: manually correct authors and publication year.
+The elib <edit> command: manually correct title, authors, and publication year.
 """
 
 from __future__ import annotations
@@ -28,16 +28,18 @@ def edit(
         help='Authors as "Last, First; Last2, First2"',
     ),
     year: int | None = typer.Option(None, "--year", help="Publication year (YYYY)"),
+    title: str | None = typer.Option(None, "--title", help="Document title"),
     clear_year: bool = typer.Option(False, "--clear-year", help="Clear publication year"),
 ):
     """
-    Manually edit authors and/or publication year on a library record.
+    Manually edit title, authors, and/or publication year on a library record.
 
     Does not rename the PDF on disk. Marks metadata_source as ``manual``.
 
     Examples:
 
         elib edit --id 42
+        elib edit --id 42 --title "Corrected title" --year 2021
         elib edit --id 42 --author "Smith, Ada; Jones, Bob" --year 2021
         elib edit --doi 10.1038/nature12373 --year 2012
         elib edit --id 42 --clear-year
@@ -66,10 +68,10 @@ def edit(
         f"status={doc.metadata_status.value}"
     )
 
-    mutating = author is not None or year is not None or clear_year
+    mutating = author is not None or year is not None or clear_year or title is not None
     if not mutating:
         typer.echo("")
-        typer.echo('Pass --author "Last, First" and/or --year YYYY to update.')
+        typer.echo('Pass --title, --author "Last, First", and/or --year YYYY to update.')
         return
 
     authors = None
@@ -94,6 +96,7 @@ def edit(
             authors=authors,
             publication_year=pub_year,
             clear_year=clear_year,
+            title=title,
         )
     except ValueError as e:
         typer.echo(f"Error: {e}", err=True)
@@ -105,6 +108,7 @@ def edit(
 
     typer.echo("")
     typer.echo("Updated:")
+    typer.echo(f"  title:   {updated.title[:80]}")
     typer.echo(f"  authors: {format_authors_editable(updated.authors_json) or '—'}")
     typer.echo(f"  year:    {updated.publication_year or '—'}")
     typer.echo(f"  source:  {updated.metadata_source.value if updated.metadata_source else '—'}")

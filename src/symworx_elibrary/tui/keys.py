@@ -1,10 +1,10 @@
 """Shared TUI key bindings and vim-style motion.
 
 Layering (aligned with SymView):
-- Bare letters: vim motion plus a few high-frequency local verbs (``o`` PDF, ``e`` edit).
+- Bare letters: vim motion plus a few high-frequency local verbs (``n`` add, ``o`` PDF, ``e`` edit).
 - Ctrl: globals that must work in any pane (quit, home, refresh).
 - Alt: remaining mnemonics, plus ``Alt+?`` help.
-- No ``priority`` on vim letters or ``o``/``e`` — an ``Input`` still types them.
+- No ``priority`` on vim letters or ``n``/``o``/``e`` — an ``Input`` still types them.
 """
 
 from __future__ import annotations
@@ -56,6 +56,8 @@ OPEN_PDF = (
 )
 
 EDIT = (Binding("e", "edit_metadata", "Edit", show=True),)
+
+ADD_CITATION = (Binding("n", "add_citation", "Add", show=True),)
 
 # Library/detail only — list-detail uses Alt+E for BibTeX export.
 EDIT_ALT = (

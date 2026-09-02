@@ -4,6 +4,7 @@ A local paper (PDF) management system with PubMed/NCBI integration and foundatio
 
 ## Features
 - PDF ingestion and processing (PyPDF2; optional GROBID client)
+- Citation-only add (DOI/URL lookup or manual) when there is no PDF
 - Metadata sourcing: **PubMed primary → Crossref fallback → honest local**
 - Metadata quality tracking (`complete` / `partial` / `fallback` / `pending`)
 - Search (SQLite FTS5 + metadata filters)
@@ -36,7 +37,9 @@ elib process --limit 20
 elib search "CRISPR oncology"
 elib search --added-since 7d
 elib search --added-from 2026-08-01 --added-to 2026-08-28
-elib edit --id 42 --author "Smith, Ada" --year 2021
+elib add 10.1080/10447318.2024.2383033
+elib add --title "Paper title" --author "Smith, Ada" --year 2024
+elib edit --id 42 --title "Corrected title" --author "Smith, Ada" --year 2021
 elib check-metadata
 elib enrich
 elib stats

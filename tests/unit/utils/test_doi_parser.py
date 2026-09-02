@@ -18,6 +18,12 @@ def test_normalize_doi_url():
     assert normalize_doi("http://dx.doi.org/10.1038/nature12373") == "10.1038/nature12373"
 
 
+def test_normalize_doi_publisher_url():
+    url = "https://www.tandfonline.com/doi/full/10.1080/10447318.2024.2383033"
+    assert normalize_doi(url) == "10.1080/10447318.2024.2383033"
+    assert extract_doi_from_text(url) == "10.1080/10447318.2024.2383033"
+
+
 def test_normalize_doi_prefix_and_punct():
     assert normalize_doi("doi:10.1038/nature12373.") == "10.1038/nature12373"
     assert normalize_doi("DOI: 10.1038/nature12373,") == "10.1038/nature12373"

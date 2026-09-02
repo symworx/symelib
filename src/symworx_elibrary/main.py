@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import typer
 
+from symworx_elibrary.cli.add import add
 from symworx_elibrary.cli.agent import agent
 from symworx_elibrary.cli.check_metadata import check_metadata
 from symworx_elibrary.cli.edit import edit
@@ -34,6 +35,7 @@ app.command(name="rebuild-index")(rebuild_index)
 app.command(name="check-metadata")(check_metadata)
 app.command(name="enrich")(enrich)
 app.command(name="edit")(edit)
+app.command(name="add")(add)
 app.add_typer(list_app, name="list")
 app.command(name="tui")(tui)
 app.command(name="agent")(agent)

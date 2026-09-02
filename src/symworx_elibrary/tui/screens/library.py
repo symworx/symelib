@@ -26,6 +26,7 @@ from symworx_elibrary.models.metadata import (
     import_window_bounds,
 )
 from symworx_elibrary.tui.keys import (
+    ADD_CITATION,
     ALT_ADD_TO_LIST,
     ALT_FIELD,
     ALT_IMPORT,
@@ -126,6 +127,7 @@ class LibraryScreen(VimMotionMixin, Screen):
         # Priority so Esc leaves search even when the Input has focus
         Binding("escape", "escape", "Esc", show=False, priority=True),
         Binding("enter", "open_detail", "Open", show=True),
+        *ADD_CITATION,
         *OPEN_PDF,
         *EDIT,
         *EDIT_ALT,
@@ -160,7 +162,7 @@ class LibraryScreen(VimMotionMixin, Screen):
             id="app-header",
         )
         yield Static(
-            "  j/k move · / search · o PDF · e edit · Alt+i imported · Alt+l lists",
+            "  j/k move · / search · n add · o PDF · e edit · Alt+i imported · Alt+l lists",
             id="action-bar",
         )
         with Horizontal(id="search-row"):
@@ -179,7 +181,7 @@ class LibraryScreen(VimMotionMixin, Screen):
         self._update_field_chrome()
         self.refresh_docs()
         self.app.set_action_bar(
-            "j/k move · / search · o PDF · e edit · Alt+i imported · Alt+l lists"
+            "j/k move · / search · n add · o PDF · e edit · Alt+i imported · Alt+l lists"
         )
 
     def _search_input(self) -> Input:
@@ -529,6 +531,21 @@ class LibraryScreen(VimMotionMixin, Screen):
     def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
         _ = event
         self.action_open_detail()
+
+    def action_add_citation(self) -> None:
+        if self._search_focused():
+            return
+        self.app.clear_esc_quit()
+        from symworx_elibrary.tui.screens.add import AddCitationModal
+
+        self.app.push_screen(AddCitationModal(), self._after_add)
+
+    def _after_add(self, doc_id: int | None) -> None:
+        if not doc_id:
+            return
+        self._selected_doc_id = doc_id
+        self.refresh_docs(self._query_text)
+        self._focus_table()
 
     def action_edit_metadata(self) -> None:
         self.app.clear_esc_quit()

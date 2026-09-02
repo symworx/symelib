@@ -116,6 +116,27 @@ def test_update_document_fields_authors_and_year(db: DatabaseManager, tmp_path: 
     assert json.loads(cleared.authors_json)[0]["last_name"] == "Curie"
 
 
+def test_update_document_fields_title(db: DatabaseManager, tmp_path: Path):
+    pdf = tmp_path / "paper.pdf"
+    pdf.write_bytes(b"%PDF")
+    doc_id = db.add_document(_ref(), file_path=pdf, filename=pdf.name, file_size=4)
+    updated = db.update_document_fields(doc_id, title="  Corrected Title  ")
+    assert updated is not None
+    assert updated.title == "Corrected Title"
+    assert updated.metadata_source == MetadataSource.manual
+    hits = db.search(SearchQuery(text="Corrected", search_field=SearchField.title))
+    assert len(hits) == 1
+    assert hits[0].metadata.id == doc_id
+
+
+def test_update_document_fields_rejects_blank_title(db: DatabaseManager, tmp_path: Path):
+    pdf = tmp_path / "paper.pdf"
+    pdf.write_bytes(b"%PDF")
+    doc_id = db.add_document(_ref(), file_path=pdf, filename=pdf.name, file_size=4)
+    with pytest.raises(ValueError, match="Title is required"):
+        db.update_document_fields(doc_id, title="   ")
+
+
 def test_update_document_fields_rejects_bad_year(db: DatabaseManager, tmp_path: Path):
     pdf = tmp_path / "paper.pdf"
     pdf.write_bytes(b"%PDF")

@@ -1,6 +1,6 @@
 [project]
 name = "symworx-elibrary"
-version = "0.2.0"
+version = "0.2.1"
 description = "Foundation for a local paper management system with agentic capabilities"
 requires-python = ">=3.13"
 authors = [

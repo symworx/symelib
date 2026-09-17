@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
-- Copyright holder set to Nathaniel Berry
+- Copyright holder set to Nathaniel T. Berry
 - TUI keys layered like SymView: vim motion (`h/j/k/l`, `gg`/`G`); local verbs `o` PDF and `e` edit; Ctrl globals (`Ctrl+Q` quit, `Ctrl+H` home to library, `Ctrl+R` / `F5` refresh); Alt mnemonics (`Alt+L` lists, `Alt+I` imported, `Alt+A` add-to-list, `Alt+S` sort, `Alt+T` theme, `Alt+?` help). `/` search, `x`/`d` delete-ish, `Esc Esc` quit unchanged. `Alt+O` / `Alt+E` remain aliases while typing in search.
 
 ### Removed

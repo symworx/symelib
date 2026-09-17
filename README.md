@@ -59,4 +59,4 @@ See [AGENTS.md](AGENTS.md) for the longer-term agentic vision, [CONTRIBUTING.md]
 
 Apache License 2.0 — see [LICENSE](LICENSE) and [NOTICE.md](NOTICE.md).
 
-Copyright (c) 2026, Nathaniel Berry.
+Copyright (c) 2026, Nathaniel T. Berry.

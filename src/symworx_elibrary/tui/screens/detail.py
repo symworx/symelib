@@ -13,6 +13,15 @@ from textual.containers import Vertical, VerticalScroll
 from textual.screen import ModalScreen, Screen
 from textual.widgets import Input, Label, Static
 
+from symworx_elibrary.tui.keys import (
+    ALT_ADD_TO_LIST,
+    EDIT,
+    EDIT_ALT,
+    OPEN_PDF,
+    QUIT_SCREEN,
+    VIM_MOTION,
+    VimMotionMixin,
+)
 from symworx_elibrary.utils.authors import (
     format_authors_editable,
     parse_authors_editable,
@@ -28,18 +37,18 @@ def _escape_markup(text: str) -> str:
     return (text or "").replace("[", "\\[").replace("]", "\\]")
 
 
-class DetailScreen(Screen):
+class DetailScreen(VimMotionMixin, Screen):
     """Full metadata + abstract for one document."""
 
     BINDINGS = [
+        *VIM_MOTION,
         Binding("escape", "go_back", "Back", show=True),
-        Binding("b", "go_back", "Back", show=False),
-        Binding("o", "open_pdf", "PDF", show=True),
-        Binding("e", "edit_metadata", "Edit", show=True),
-        Binding("a", "add_to_list", "List+", show=True),
+        *OPEN_PDF,
+        *EDIT,
+        *EDIT_ALT,
+        *ALT_ADD_TO_LIST,
         Binding("enter", "open_pdf", "PDF", show=False),
-        Binding("t", "app.toggle_theme", "Theme", show=True),
-        Binding("ctrl+q", "app.quit", "Quit", show=True, priority=True, key_display="Ctrl+Q"),
+        *QUIT_SCREEN,
     ]
 
     def __init__(self, document_id: int) -> None:
@@ -57,21 +66,23 @@ class DetailScreen(Screen):
             id="app-header",
         )
         yield Static(
-            "  e edit authors/year  ·  o open PDF  ·  a add to list  ·  Esc back", id="action-bar"
+            "  j/k scroll  ·  e edit  ·  o PDF  ·  Alt+a list  ·  Esc back",
+            id="action-bar",
         )
         with VerticalScroll(id="detail-scroll"):
             yield Static("", id="detail-title")
             yield Static("", id="detail-meta")
             yield Static("Abstract", classes="section-label")
             yield Static("", id="detail-abstract")
-            yield Static("File  ·  [o] open PDF", classes="section-label")
+            yield Static("File  ·  o open PDF", classes="section-label")
             yield Static("", id="detail-file")
             yield Static("Lists", classes="section-label")
             yield Static("", id="detail-lists")
 
     def on_mount(self) -> None:
         self.app.clear_esc_quit()
-        self.app.set_action_bar("e edit authors/year  ·  o open PDF  ·  a add to list  ·  Esc back")
+        self.app.set_action_bar("j/k scroll  ·  e edit  ·  o PDF  ·  Alt+a list  ·  Esc back")
+        self.query_one("#detail-scroll", VerticalScroll).focus()
         self._load()
 
     def _load(self) -> None:
@@ -125,7 +136,7 @@ class DetailScreen(Screen):
             )
         else:
             self.query_one("#detail-lists", Static).update(
-                "[dim]Not on any list — press a to add[/dim]"
+                "[dim]Not on any list — press Alt+a to add[/dim]"
             )
 
         self.sub_title = f"id={doc.id}"

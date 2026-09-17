@@ -1,6 +1,6 @@
 /* elib TUI themes
    Default: dark cyan (SymView-like)
-   Light:   beige / parchment — toggle with `t`
+   Light:   beige / parchment — toggle with Alt+T
 */
 
 /* ========== DARK (default) ========== */

@@ -3,22 +3,28 @@ elib Textual application entry.
 
 Design notes (mirrors symworx SymView chrome):
   - Cyan accents on dark surface (see elib.tcss)
-  - Light beige theme toggle with `t`
+  - Light beige theme toggle with Alt+T
   - Esc Esc at root to quit; Ctrl+Q anytime
+  - Vim motion (hjkl, gg/G) when not typing in an Input
 """
 
 from __future__ import annotations
 
 import os
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from textual.app import App
-from textual.binding import Binding
+from textual.widgets import Input
 
 from symworx_elibrary.services.db_manager import DatabaseManager
+from symworx_elibrary.tui.keys import GG_TIMEOUT_S, HELP, HOME, QUIT, REFRESH, THEME
 from symworx_elibrary.tui.screens.library import LibraryScreen
 from symworx_elibrary.utils.config import Config
 from symworx_elibrary.utils.open_file import open_path
+
+if TYPE_CHECKING:
+    from textual.timer import Timer
 
 
 class ElibApp(App[None]):
@@ -29,9 +35,11 @@ class ElibApp(App[None]):
     CSS_PATH = "elib.tcss"
 
     BINDINGS = [
-        Binding("ctrl+q", "quit", "Quit", show=True, priority=True, key_display="Ctrl+Q"),
-        Binding("t", "toggle_theme", "Theme", show=True),
-        Binding("question_mark", "help", "Help", show=False),
+        *QUIT,
+        *HOME,
+        *REFRESH,
+        *HELP,
+        *THEME,
     ]
 
     def __init__(self, db_path: Path, config: Config | None = None, **kwargs):
@@ -40,15 +48,32 @@ class ElibApp(App[None]):
         self.db = DatabaseManager(self.db_path)
         self.config = config or Config.load()
         self.esc_quit_pending: bool = False
+        self.gg_pending: bool = False
+        self._gg_timer: Timer | None = None
         self.light_theme: bool = False
 
     def on_mount(self) -> None:
         self.push_screen(LibraryScreen())
 
+    def clear_gg(self) -> None:
+        self.gg_pending = False
+        if self._gg_timer is not None:
+            self._gg_timer.stop()
+            self._gg_timer = None
+
+    def arm_gg(self) -> None:
+        """First ``g``: wait for a second ``g`` to jump to top."""
+        self.esc_quit_pending = False
+        self.clear_gg()
+        self.gg_pending = True
+        self._gg_timer = self.set_timer(GG_TIMEOUT_S, self.clear_gg)
+
     def clear_esc_quit(self) -> None:
         self.esc_quit_pending = False
+        self.clear_gg()
 
     def arm_esc_quit(self) -> None:
+        self.clear_gg()
         self.esc_quit_pending = True
         self.notify("Esc again to quit  ·  Ctrl+Q anytime", timeout=3)
 
@@ -66,6 +91,33 @@ class ElibApp(App[None]):
             bar.update(f"  {text}")  # type: ignore[union-attr]
         except Exception:
             pass
+
+    def action_go_home(self) -> None:
+        """Pop back to the library table (SymView Ctrl+H). No-op while typing."""
+        if isinstance(self.focused, Input):
+            return
+        self.clear_esc_quit()
+        while not isinstance(self.screen, LibraryScreen) and len(self.screen_stack) > 1:
+            self.pop_screen()
+        if isinstance(self.screen, LibraryScreen):
+            try:
+                self.screen.focus_results()
+            except Exception:
+                pass
+
+    def action_refresh_view(self) -> None:
+        """Reload the current pane from SQLite (Ctrl+R / F5)."""
+        self.clear_esc_quit()
+        screen = self.screen
+        refresh = getattr(screen, "action_refresh", None)
+        if callable(refresh):
+            refresh()
+            return
+        self.reload_db()
+        load = getattr(screen, "_load", None)
+        if callable(load):
+            load()
+        self.notify("Refreshed", timeout=2)
 
     def action_toggle_theme(self) -> None:
         """Switch between dark cyan and light beige themes."""
@@ -90,8 +142,9 @@ class ElibApp(App[None]):
 
     def action_help(self) -> None:
         self.notify(
-            "/ search · Esc leave search · f/Ctrl+f field · ↓ table · "
-            "s sort · o PDF · r refresh · l lists · t theme · Esc Esc / Ctrl+Q quit",
+            "j/k move · h/l · gg/G · / search · o PDF · e edit · "
+            "Alt+? help · Ctrl+H home · Ctrl+R refresh · Alt+l lists · "
+            "Alt+i imported · Alt+a list · Alt+s sort · Alt+t theme · Esc Esc / Ctrl+Q quit",
             title="Keys",
             timeout=10,
         )

@@ -37,7 +37,8 @@ elib list create "my-project" -d "Working bibliography"
 
 # 7. Interactive TUI
 elib tui
-# Keys: / search · i imported · e edit authors/year · enter open · a add-to-list · l lists · q quit
+# Keys: / search · j/k move · o PDF · e edit · Alt+l lists · Ctrl+H home · Ctrl+R refresh
+# Help: Alt+?   Quit: Esc Esc (library root) or Ctrl+Q
 
 # 8. Rebuild the full-text search index after bulk changes
 elib rebuild-index

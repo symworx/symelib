@@ -11,8 +11,8 @@ def tui(ctx: typer.Context) -> None:
     """
     Open the interactive TUI to browse, search, read abstracts, and manage lists.
 
-    Keys: / search · f field · enter detail · o open PDF · a list · l lists
-    Quit: Esc Esc (at library root) or Ctrl+Q
+    Keys: j/k move · / search · o PDF · e edit · Alt+l lists · Ctrl+H home · Ctrl+R refresh
+    Help: Alt+?   Quit: Esc Esc (at library root) or Ctrl+Q
     """
     config = ctx.obj["config"]
     try:

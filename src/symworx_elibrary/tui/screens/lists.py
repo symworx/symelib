@@ -19,6 +19,21 @@ from textual.widgets import DataTable, Input, Label, Static
 
 from symworx_elibrary.models.metadata import SortBy, SortOrder
 from symworx_elibrary.services.bibtex import documents_to_bibtex
+from symworx_elibrary.tui.keys import (
+    ALT_EXPORT,
+    ALT_EXPORT_DETAIL,
+    ALT_NEW_LIST,
+    ALT_RENAME_LIST,
+    ALT_SORT,
+    ALT_SORT_AUTHOR,
+    ALT_SORT_ORDER,
+    ALT_SORT_YEAR,
+    EDIT,
+    OPEN_PDF,
+    QUIT_SCREEN,
+    VIM_MOTION,
+    VimMotionMixin,
+)
 
 if TYPE_CHECKING:
     from symworx_elibrary.tui.app import ElibApp
@@ -32,22 +47,18 @@ _SORT_LABEL = {
 }
 
 
-class ListsScreen(Screen):
+class ListsScreen(VimMotionMixin, Screen):
     """Browse named paper lists (active only; soft-deleted hidden)."""
 
     BINDINGS = [
+        *VIM_MOTION,
         Binding("escape", "go_back", "Back", show=True),
         Binding("enter", "open_list", "View", show=True),
-        Binding("v", "open_list", "View", show=False),
-        Binding("n", "new_list", "New", show=True),
-        Binding("m", "rename_list", "Rename", show=True),
-        Binding("e", "export_list", "Export", show=True),
+        *ALT_NEW_LIST,
+        *ALT_RENAME_LIST,
+        *ALT_EXPORT,
         Binding("d", "delete_list", "Soft-del", show=True),
-        Binding("o", "open_list", "View", show=False),
-        Binding("r", "refresh", "Refresh", show=True),
-        Binding("f5", "refresh", "Refresh", show=False),
-        Binding("t", "app.toggle_theme", "Theme", show=True),
-        Binding("ctrl+q", "app.quit", "Quit", show=True, priority=True, key_display="Ctrl+Q"),
+        *QUIT_SCREEN,
     ]
 
     def __init__(self) -> None:
@@ -64,7 +75,7 @@ class ListsScreen(Screen):
             id="app-header",
         )
         yield Static(
-            "  enter view · n new · m rename · e export · d soft-delete · r refresh · Esc",
+            "  j/k move · enter view · Alt+n new · Alt+m rename · Alt+e export · d del · Esc",
             id="action-bar",
         )
         yield Static("Paper lists — enter to view only that list’s papers", id="status-bar")
@@ -73,7 +84,7 @@ class ListsScreen(Screen):
     def on_mount(self) -> None:
         self.app.clear_esc_quit()
         self.app.set_action_bar(
-            "enter view  ·  n new  ·  m rename  ·  e export  ·  d soft-delete  ·  Esc back"
+            "j/k move  ·  enter view  ·  Alt+n new  ·  Alt+m rename  ·  Alt+e export  ·  Esc"
         )
         table = self.query_one("#lists-table", DataTable)
         table.add_columns("Name", "Papers", "Description")
@@ -141,7 +152,7 @@ class ListsScreen(Screen):
         bar = self.query_one("#status-bar", Static)
         n = table.row_count
         bar.update(
-            f"{n} active list(s) · enter view · m rename · d soft-delete "
+            f"{n} active list(s) · enter view · Alt+m rename · d soft-delete "
             f"(restore: elib list restore NAME)"
         )
 
@@ -305,23 +316,24 @@ class RenameListModal(ModalScreen[tuple[str, str] | None]):
         self.dismiss(None)
 
 
-class ListDetailScreen(Screen):
+class ListDetailScreen(VimMotionMixin, Screen):
     """Papers belonging to one named list only."""
 
     BINDINGS = [
+        *VIM_MOTION,
         Binding("escape", "go_back", "Back", show=True),
         Binding("enter", "open_detail", "Detail", show=True),
-        Binding("o", "open_pdf", "PDF", show=True),
-        Binding("m", "rename_list", "Rename", show=True),
-        Binding("e", "export", "Export", show=True),
+        *OPEN_PDF,
+        *EDIT,
+        *ALT_RENAME_LIST,
+        *ALT_EXPORT_DETAIL,
         Binding("x", "remove", "Remove", show=True),
         Binding("delete", "remove", "Remove", show=False),
-        Binding("s", "cycle_sort", "Sort", show=True),
-        Binding("S", "toggle_sort_order", "Order", show=True),
-        Binding("y", "sort_year", "Year", show=False),
-        Binding("u", "sort_author", "Author", show=False),
-        Binding("t", "app.toggle_theme", "Theme", show=True),
-        Binding("ctrl+q", "app.quit", "Quit", show=True, priority=True, key_display="Ctrl+Q"),
+        *ALT_SORT,
+        *ALT_SORT_ORDER,
+        *ALT_SORT_YEAR,
+        *ALT_SORT_AUTHOR,
+        *QUIT_SCREEN,
     ]
 
     def __init__(self, list_name: str) -> None:
@@ -341,7 +353,7 @@ class ListDetailScreen(Screen):
             id="app-header",
         )
         yield Static(
-            "  list only · enter detail · m rename · s sort · o PDF · x remove",
+            "  j/k move · enter detail · o PDF · e edit · Alt+e export · x remove",
             id="action-bar",
         )
         yield Static("", id="status-bar")
@@ -349,7 +361,7 @@ class ListDetailScreen(Screen):
 
     def on_mount(self) -> None:
         self.app.clear_esc_quit()
-        self.app.set_action_bar(f"list “{self.list_name}” · m rename · s sort · o PDF · x remove")
+        self.app.set_action_bar(f"list “{self.list_name}” · j/k move · o PDF · e edit · x remove")
         table = self.query_one("#list-items-table", DataTable)
         table.add_columns("ID", "Year", "Title")
         self.reload_table()
@@ -383,7 +395,7 @@ class ListDetailScreen(Screen):
                 f"[dim]Esc back · Ctrl+Q[/]"
             )
             self.app.set_action_bar(
-                f"list “{self.list_name}” · m rename · s sort · o PDF · x remove"
+                f"list “{self.list_name}” · j/k move · o PDF · e edit · x remove"
             )
         except Exception:
             pass
@@ -530,6 +542,25 @@ class ListDetailScreen(Screen):
         from symworx_elibrary.tui.screens.detail import DetailScreen
 
         self.app.push_screen(DetailScreen(doc_id))
+
+    def action_edit_metadata(self) -> None:
+        doc_id = self._selected_id()
+        if doc_id is None:
+            self.notify("No paper selected", severity="warning")
+            return
+        self._selected_doc_id = doc_id
+        from symworx_elibrary.tui.screens.detail import EditMetadataModal
+
+        self.app.push_screen(EditMetadataModal(doc_id), self._after_edit)
+
+    def _after_edit(self, changed: bool | None) -> None:
+        if changed:
+            self.reload_table()
+
+    def action_refresh(self) -> None:
+        self.app.reload_db()
+        self.reload_table()
+        self.notify("List refreshed", timeout=2)
 
     def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
         _ = event

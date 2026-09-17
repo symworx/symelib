@@ -25,6 +25,23 @@ from symworx_elibrary.models.metadata import (
     SortOrder,
     import_window_bounds,
 )
+from symworx_elibrary.tui.keys import (
+    ALT_ADD_TO_LIST,
+    ALT_FIELD,
+    ALT_IMPORT,
+    ALT_LISTS,
+    ALT_NEW_LIST,
+    ALT_SORT,
+    ALT_SORT_AUTHOR,
+    ALT_SORT_ORDER,
+    ALT_SORT_YEAR,
+    EDIT,
+    EDIT_ALT,
+    OPEN_PDF,
+    QUIT_SCREEN,
+    VIM_MOTION,
+    VimMotionMixin,
+)
 
 if TYPE_CHECKING:
     from symworx_elibrary.tui.app import ElibApp
@@ -99,31 +116,27 @@ def _status_badge(meta: DocumentMetadata) -> str:
     return s[:4]
 
 
-class LibraryScreen(Screen):
+class LibraryScreen(VimMotionMixin, Screen):
     """Main library table + scoped search."""
 
     BINDINGS = [
+        *VIM_MOTION,
         Binding("/", "focus_search", "Search", show=True),
-        Binding("f", "cycle_field", "Field", show=True),
-        # Works even while the search Input is focused (plain "f" would type a letter)
-        Binding("ctrl+f", "cycle_field", "Field", show=False, priority=True),
+        *ALT_FIELD,
         # Priority so Esc leaves search even when the Input has focus
         Binding("escape", "escape", "Esc", show=False, priority=True),
         Binding("enter", "open_detail", "Open", show=True),
-        Binding("o", "open_pdf", "PDF", show=True),
-        Binding("e", "edit_metadata", "Edit", show=True),
-        Binding("a", "add_to_list", "List+", show=True),
-        Binding("l", "open_lists", "Lists", show=True),
-        Binding("r", "refresh", "Refresh", show=True),
-        Binding("f5", "refresh", "Refresh", show=False),
-        Binding("s", "cycle_sort", "Sort", show=True),
-        Binding("S", "toggle_sort_order", "Order", show=True),
-        Binding("i", "cycle_import_window", "Imported", show=True),
-        Binding("ctrl+i", "cycle_import_window", "Imported", show=False, priority=True),
-        Binding("y", "sort_year", "Year", show=False),
-        Binding("u", "sort_author", "Author", show=False),
-        Binding("t", "app.toggle_theme", "Theme", show=True),
-        Binding("ctrl+q", "app.quit", "Quit", show=True, priority=True, key_display="Ctrl+Q"),
+        *OPEN_PDF,
+        *EDIT,
+        *EDIT_ALT,
+        *ALT_ADD_TO_LIST,
+        *ALT_LISTS,
+        *ALT_SORT,
+        *ALT_SORT_ORDER,
+        *ALT_IMPORT,
+        *ALT_SORT_YEAR,
+        *ALT_SORT_AUTHOR,
+        *QUIT_SCREEN,
     ]
 
     def __init__(self) -> None:
@@ -147,7 +160,7 @@ class LibraryScreen(Screen):
             id="app-header",
         )
         yield Static(
-            "  / search · f field · i imported · e edit · ↓ table · enter open · o PDF",
+            "  j/k move · / search · o PDF · e edit · Alt+i imported · Alt+l lists",
             id="action-bar",
         )
         with Horizontal(id="search-row"):
@@ -166,7 +179,7 @@ class LibraryScreen(Screen):
         self._update_field_chrome()
         self.refresh_docs()
         self.app.set_action_bar(
-            "/ search · f field · i imported · e edit · ↓ results · o PDF · l lists"
+            "j/k move · / search · o PDF · e edit · Alt+i imported · Alt+l lists"
         )
 
     def _search_input(self) -> Input:
@@ -191,6 +204,10 @@ class LibraryScreen(Screen):
         table = self._docs_table()
         table.focus()
         self._restore_selection(table)
+
+    def focus_results(self) -> None:
+        """Public: put the keyboard back on the results table."""
+        self._focus_table()
 
     def _update_field_chrome(self) -> None:
         badge = self.query_one("#search-field-badge", Static)
@@ -349,7 +366,7 @@ class LibraryScreen(Screen):
         q = draft or self._query_text
         self.refresh_docs(q if q else None)
         self.notify(
-            f"Search field: {_FIELD_LABEL[self._search_field]}  (Ctrl+f while typing)",
+            f"Search field: {_FIELD_LABEL[self._search_field]}  (Alt+f / Ctrl+f while typing)",
             timeout=2,
         )
 
@@ -542,12 +559,13 @@ class LibraryScreen(Screen):
         self.app.push_screen(ListsScreen())
 
 
-class AddToListModal(ModalScreen[None]):
+class AddToListModal(VimMotionMixin, ModalScreen[None]):
     """Pick a list (or create one) and add the current document."""
 
     BINDINGS = [
+        *VIM_MOTION,
         Binding("escape", "dismiss", "Cancel", show=True),
-        Binding("n", "new_list", "New", show=True),
+        *ALT_NEW_LIST,
         Binding("enter", "confirm", "Add", show=True),
     ]
 
@@ -565,7 +583,7 @@ class AddToListModal(ModalScreen[None]):
             yield Label("Add to list", id="dialog-title")
             yield Static(self.doc_title[:80], id="dialog-doc")
             yield DataTable(id="pick-list-table", cursor_type="row")
-            yield Static("enter add · n new list · esc cancel", id="dialog-help")
+            yield Static("enter add · Alt+n new list · esc cancel", id="dialog-help")
 
     def on_mount(self) -> None:
         table = self.query_one("#pick-list-table", DataTable)
@@ -594,7 +612,7 @@ class AddToListModal(ModalScreen[None]):
     def action_confirm(self) -> None:
         table = self.query_one("#pick-list-table", DataTable)
         if table.row_count == 0:
-            self.notify("Create a list first (n)", severity="warning")
+            self.notify("Create a list first (Alt+n)", severity="warning")
             return
         row_key = table.coordinate_to_cell_key(table.cursor_coordinate).row_key
         if row_key is None or row_key.value is None:

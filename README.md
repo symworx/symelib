@@ -54,3 +54,9 @@ make db-up
 ```
 
 See [AGENTS.md](AGENTS.md) for the longer-term agentic vision, [CONTRIBUTING.md](CONTRIBUTING.md) for how to develop and open PRs, and [docs/RELEASING.md](docs/RELEASING.md) for release branching/tags (SymWorx-style).
+
+## License
+
+Apache License 2.0 — see [LICENSE](LICENSE) and [NOTICE.md](NOTICE.md).
+
+Copyright (c) 2026, Nathaniel T. Berry.

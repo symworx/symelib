@@ -15,7 +15,7 @@ import json
 import subprocess
 import sys
 
-REPO = "csymd/symelib"
+REPO = "symworx/symelib"
 
 # Names from an earlier split; family uses a combined stage-main ruleset.
 OBSOLETE = ("main", "stage")

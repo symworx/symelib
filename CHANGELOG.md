@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- Copyright holder set to Nathaniel T. Berry
+- Repository URLs updated from `github.com/csymd` to `github.com/symworx`
 - TUI keys layered like SymView: vim motion (`h/j/k/l`, `gg`/`G`); local verbs `o` PDF and `e` edit; Ctrl globals (`Ctrl+Q` quit, `Ctrl+H` home to library, `Ctrl+R` / `F5` refresh); Alt mnemonics (`Alt+L` lists, `Alt+I` imported, `Alt+A` add-to-list, `Alt+S` sort, `Alt+T` theme, `Alt+?` help). `/` search, `x`/`d` delete-ish, `Esc Esc` quit unchanged. `Alt+O` / `Alt+E` remain aliases while typing in search.
 
 ### Removed
@@ -47,6 +49,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Version Links
 
-[Unreleased]: https://github.com/csymd/symelib/compare/v0.2.0...HEAD
-[0.2.0]: https://github.com/csymd/symelib/compare/v0.1.0...v0.2.0
-[0.1.0]: https://github.com/csymd/symelib/releases/tag/v0.1.0
+[Unreleased]: https://github.com/symworx/symelib/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/symworx/symelib/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/symworx/symelib/releases/tag/v0.1.0

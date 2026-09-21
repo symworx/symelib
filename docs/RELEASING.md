@@ -1,7 +1,7 @@
 # Releasing elib
 
-Release process for elib, aligned with the **SymWorx** GitHub Flow
-(`feature/*` → `worx` → tag `vX.Y.Z`), adapted for a **single Python
+Release process for elib. **SymWorx org standard** (GitHub Flow:
+`feature/*` → `worx` → tag `vX.Y.Z`), adapted for a **single Python
 package** (`pyproject.toml` version).
 
 See also: [PUBLIC_RELEASE.md](PUBLIC_RELEASE.md) (security scrub before first public push).
@@ -147,7 +147,7 @@ GitHub Release → mark **Pre-release**.
 
 ## CI
 
-Same split as SymWorx / SymKit / SymSight:
+Org-standard CI split:
 
 | Workflow | Trigger | Checks |
 |----------|---------|--------|

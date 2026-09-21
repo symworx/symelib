@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Create or update repository rulesets (family cadence).
 
-Same layout as SymWorx / SymKit / SymSight. Organization admins bypass
+Org-standard ruleset layout. Organization admins bypass
 (so `git push --admin` still works):
 
     ./scripts/apply-github-rulesets.py

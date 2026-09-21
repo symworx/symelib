@@ -1,6 +1,6 @@
-# Day-to-day CI.
+# Day-to-day CI. SymWorx org standard (GitHub Flow; default branch worx).
 #
-# GitHub Flow (same as SymWorx / SymKit / SymSight):
+# GitHub Flow:
 #   feature/* ──PR──► worx ──tag──► vX.Y.Z
 # develop stays in the filter until GitHub renames develop → worx.
 # Tag / release.yml re-runs the full gate (and creates the GitHub Release).

@@ -67,7 +67,7 @@ If you see something that needs fixing, feel free to open a PR directly—no nee
    make test
    ```
 
-7. **Commit** with clear, descriptive messages; push and open a Pull Request to **`worx`**.
+7. **Commit** with clear, descriptive messages; push and open a Pull Request to **`worx`** (**SymWorx org standard**, GitHub Flow).
 
    GitHub Actions `CI` runs on `worx` and `develop` (jobs `fmt` and `check`).
    Release validation (`release.yml`) runs on pushes to `release/**` and tags

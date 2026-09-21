@@ -53,7 +53,7 @@ make db-up
 # (or: podman compose -f compose.yaml up -d postgres)
 ```
 
-See [AGENTS.md](AGENTS.md) for the longer-term agentic vision, [CONTRIBUTING.md](CONTRIBUTING.md) for how to develop and open PRs, and [docs/RELEASING.md](docs/RELEASING.md) for release branching/tags (SymWorx-style).
+See [AGENTS.md](AGENTS.md) for the longer-term agentic vision, [CONTRIBUTING.md](CONTRIBUTING.md) for how to develop and open PRs, and [docs/RELEASING.md](docs/RELEASING.md) for the org-standard GitHub Flow / tags on `worx`.
 
 ## License
 

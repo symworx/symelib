@@ -1,8 +1,8 @@
 # Releasing elib
 
-Release process for elib, aligned with the **SymWorx** branch model
-(`develop` → `stage` → `release/vX.Y.Z` → `main` + tag `vX.Y.Z`),
-adapted for a **single Python package** (`pyproject.toml` version).
+Release process for elib. **SymWorx org standard** (GitHub Flow:
+`feature/*` → `worx` → tag `vX.Y.Z`), adapted for a **single Python
+package** (`pyproject.toml` version).
 
 See also: [PUBLIC_RELEASE.md](PUBLIC_RELEASE.md) (security scrub before first public push).
 
@@ -12,25 +12,17 @@ See also: [PUBLIC_RELEASE.md](PUBLIC_RELEASE.md) (security scrub before first pu
 
 | Branch | Purpose |
 |--------|---------|
-| `develop` | Day-to-day integration. Feature PRs land here. |
-| `stage` | Early-access / soak. Optional pre-releases (`0.1.0-beta.1`). |
-| `release/vX.Y.Z` | Release prep only: version bump, changelog freeze, final fixes. |
-| `main` | Stable releases. Tagged `vX.Y.Z` from here. |
+| `worx` | Default. Feature PRs land here. Keep it releasable. |
+| `release/vX.Y.Z` | Optional freeze: version bump, changelog, last-minute fixes. |
 
 ```text
-feature/* ──► develop ──► stage ──► release/vX.Y.Z ──► main
-                                              │
-                                              └── tag vX.Y.Z
+feature/*  ──PR──►  worx  ──tag──►  vX.Y.Z
 ```
 
-**Pre-releases** (e.g. `v0.1.0-rc.1`) may be tagged from `stage` or a release branch.
-**Final releases** are cut only after `release/vX.Y.Z` → `main` and tag `vX.Y.Z`.
+**Pre-releases** (e.g. `v0.1.0-rc.1`) are tags on `worx` (GitHub pre-release).
+**Final releases** are tagged on `worx`.
 
-Until `main` / `stage` exist on the remote, you can still:
-
-1. Land work on `develop` (or finish `grok/refactor` → merge to `develop`).
-2. Cut `release/v0.1.0` from the integration branch.
-3. Create `main` by merging that release PR (first time).
+Until GitHub finishes renaming `develop` → `worx`, open PRs against the GitHub default (`develop`).
 
 ---
 
@@ -43,7 +35,7 @@ Until `main` / `stage` exist on the remote, you can still:
 
 Release metadata checks (when CI is enabled) should assert:
 
-- Tag / `release/vX.Y.Z` branch version **equals** `pyproject.toml` version.
+- Tag / optional `release/vX.Y.Z` branch version **equals** `pyproject.toml` version.
 - `CHANGELOG.md` contains a `## [X.Y.Z]` section (not only `[Unreleased]`).
 
 ---
@@ -68,7 +60,7 @@ Release metadata checks (when CI is enabled) should assert:
 **Blockers before first public tag:**
 
 - [ ] Security scrub complete ([PUBLIC_RELEASE.md](PUBLIC_RELEASE.md)) — config/example, no keys, no library PDFs
-- [ ] All intentional code on `develop` (or release branch), not only a dirty working tree
+- [ ] All intentional code on `worx` (or an optional release branch), not only a dirty working tree
 - [ ] `make check` (or `pytest` + format) green
 - [ ] Fresh clone smoke: `uv sync` → `elib setup` → process sample → search → TUI
 - [ ] Changelog section for `0.1.0` filled in
@@ -80,7 +72,7 @@ Release metadata checks (when CI is enabled) should assert:
 ### 0. Preflight (every release)
 
 ```bash
-# working tree clean; on up-to-date stage (or develop if stage not used yet)
+# working tree clean; on up-to-date worx (develop until the GitHub rename)
 git status
 make check                 # ruff format/lint checks + pytest
 make pre-commit-run        # optional full-tree hooks
@@ -89,15 +81,7 @@ git grep -iE 'api_key\s*[:=].*[a-f0-9]{20}|BEGIN PRIVATE' || true
 
 Confirm secrets stay in `~/.config/elib/env` / `~/elibrary/config.yaml` only.
 
-### 1. Open the release branch
-
-```bash
-git checkout stage       # or develop if stage is not active yet
-git pull
-git checkout -b release/vX.Y.Z
-```
-
-### 2. Freeze version + changelog
+### 1. Freeze version + changelog (on `worx`)
 
 1. Set version in `pyproject.toml`:
 
@@ -110,51 +94,37 @@ git checkout -b release/vX.Y.Z
    - Leave a fresh empty `## [Unreleased]` section
    - Update compare links at the bottom
 
-3. Commit:
+3. Commit and open a PR into `worx` (or commit on an optional `release/vX.Y.Z` freeze branch and PR that back):
 
    ```bash
    git add pyproject.toml CHANGELOG.md uv.lock   # lock if needed
    git commit -m "release: vX.Y.Z"
-   git push -u origin release/vX.Y.Z
+   git push -u origin HEAD
    ```
 
-### 3. PR → `main`
-
-- Open PR: `release/vX.Y.Z` → `main` (squash or merge commit; pick one policy and stick to it — SymWorx prefers squash for release PRs).
 - Title: `release: vX.Y.Z`
 - Description: short summary + checklist (tests, scrub, smoke).
 - Merge only when green.
 
-### 4. Tag
+### 2. Tag
 
-From `main` after merge:
+From `worx` after merge:
 
 ```bash
-git checkout main
+git checkout worx
 git pull
 git tag -a vX.Y.Z -m "elib vX.Y.Z"
-git push origin main
 git push origin vX.Y.Z
 ```
 
-### 5. GitHub Release
+### 3. GitHub Release
 
 `release.yml` creates the GitHub Release from tag `vX.Y.Z` after validation
 succeeds (pre-release if the version contains `-`). PyPI stays paused.
 
-### 6. Back-merge (keep history linear-ish)
+### 4. After release
 
-```bash
-git checkout develop
-git merge main             # or merge release branch
-git push origin develop
-# if using stage:
-git checkout stage && git merge main && git push
-```
-
-### 7. After release
-
-- Bump `develop` to the next **dev** intent via changelog only (version can stay until next release branch, or set `X.Y.Z+dev` only if you adopt that later — elib keeps a simple SemVer in pyproject).
+- Next work continues on `worx`. Version can stay until the next bump (elib keeps a simple SemVer in pyproject).
 - Optional: announce, update any personal notes.
 - **Do not** auto-publish to PyPI until you explicitly want that (mirror SymWorx: validation first, publish jobs later).
 
@@ -162,7 +132,7 @@ git checkout stage && git merge main && git push
 
 ## Pre-release procedure (optional)
 
-From `stage` (or `develop`):
+From `worx`:
 
 ```bash
 # e.g. 0.1.0-rc.1
@@ -177,14 +147,14 @@ GitHub Release → mark **Pre-release**.
 
 ## CI
 
-Same split as SymWorx / SymKit / SymSight:
+Org-standard CI split:
 
 | Workflow | Trigger | Checks |
 |----------|---------|--------|
-| `ci.yml` | PR / push `develop`; `workflow_dispatch` | `fmt` (ruff format), `check` (ruff lint + pytest) |
-| `release.yml` | PR → `main`; push `release/**`; tags `v*`; `workflow_dispatch` | Version ↔ tag/branch match; changelog heading; `fmt`; `check`; `uv build` smoke. GitHub Release on tags only. |
+| `ci.yml` | PR / push `worx` and `develop`; `workflow_dispatch` | `fmt` (ruff format), `check` (ruff lint + pytest) |
+| `release.yml` | PR → `main` (legacy); push `release/**`; tags `v*`; `workflow_dispatch` | Version ↔ tag/branch match; changelog heading; `fmt`; `check`; `uv build` smoke. GitHub Release on tags only. |
 
-Push to `main` is not a CI/release trigger: the PR into `main` already ran `release.yml`. `stage` / `main` are promotions of a SHA already gated on `develop` or the release PR.
+Push to `worx` is not a Release trigger: day-to-day CI already ran.
 
 **PyPI publish stays paused.** GitHub Release runs on tags `v*` after validation.
 
@@ -194,7 +164,7 @@ Local equivalent:
 make check   # ruff check + format --check + pytest
 ```
 
-Repository rulesets (PR required on `develop` / `stage` / `main` / `release/**`, no force-push, `v*` tags immutable except org-admin bypass):
+Org rulesets still name `develop` / `stage` / `main` until an admin pass after the default-branch rename. Repo helper:
 
 ```bash
 ./scripts/apply-github-rulesets.py
@@ -202,28 +172,9 @@ Repository rulesets (PR required on `develop` / `stage` / `main` / `release/**`,
 
 ---
 
-## First public open-source sequence (elib today)
+## First public open-source sequence
 
-You are on a feature branch with substantial WIP. Recommended order:
-
-1. **Finish scrub** (done / in progress): `config.example.yaml`, gitignore, no keys in tree, API key only in `~/.config/elib/env`.
-2. **Land the product PR**: commit WIP on `grok/refactor` (or split PRs) → merge to `develop`.
-3. **Create branch layout on origin** if missing:
-   - `develop` = integration
-   - `main` = first stable (can be created from first release)
-   - optional `stage`
-4. **Cut `release/v0.1.0`**, freeze changelog, smoke test.
-5. **Merge to `main`**, tag `v0.1.0`, GitHub Release notes.
-6. **Make repo public** only after a final `git grep` / clone smoke (see PUBLIC_RELEASE.md).
-7. Add CI later; do not block v0.1 on Actions.
-
-### Suggested first-tag version
-
-| Choice | When |
-|--------|------|
-| **`0.1.0`** | Core CLI + TUI + lists usable; agents optional | **Recommended** |
-| `0.1.0-rc.1` | Want external testers before “final” | Optional soak |
-| `0.2.0` | Only if you want to reserve 0.1 for an older tip | Unlikely needed |
+Shipped (`v0.1.0` and later). Keep using GitHub Flow on `worx` for the next tag.
 
 ---
 
@@ -240,26 +191,23 @@ Not required for GitHub releases. When ready:
 ## Checklist (copy into the release PR)
 
 - [ ] Version in `pyproject.toml` = `X.Y.Z`
-- [ ] Branch name `release/vX.Y.Z` (or tag) matches
+- [ ] Branch name `release/vX.Y.Z` (if used) or tag matches
 - [ ] `CHANGELOG.md` has `## [X.Y.Z] - YYYY-MM-DD`
 - [ ] `make check` green
 - [ ] No secrets / personal `config.yaml` / PDFs in the commit
 - [ ] Smoke: setup → process → search → TUI open PDF → list export
-- [ ] Tag `vX.Y.Z` on `main` after merge (`release.yml` creates the GitHub Release)
-- [ ] `develop` (and `stage`) back-merged
+- [ ] Tag `vX.Y.Z` on `worx` after merge (`release.yml` creates the GitHub Release)
 
 ---
 
 ## Quick reference (commands)
 
 ```bash
-# cut release
-git checkout -b release/v0.1.0 stage   # or develop
-# edit pyproject.toml version + CHANGELOG
-git commit -am "release: v0.1.0"
-git push -u origin release/v0.1.0
-# PR → main, merge, then:
-git checkout main && git pull
-git tag -a v0.1.0 -m "elib v0.1.0"
-git push origin main --tags
+# on worx: edit pyproject.toml version + CHANGELOG
+git commit -am "release: v0.2.2"
+git push
+# PR → worx, merge, then:
+git checkout worx && git pull
+git tag -a v0.2.2 -m "elib v0.2.2"
+git push origin v0.2.2
 ```

@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 """Create or update repository rulesets (family cadence).
 
-Same layout as SymWorx / SymKit / SymSight. Organization admins bypass
+Org-standard ruleset layout. Organization admins bypass
 (so `git push --admin` still works):
 
     ./scripts/apply-github-rulesets.py
 
-Develop required checks match ci.yml job ids: fmt, check.
+Default-branch required checks match ci.yml job ids: fmt, check.
+The ruleset is still named "develop" until an org-admin pass after
+GitHub renames the default to worx.
 """
 
 from __future__ import annotations
@@ -49,7 +51,11 @@ RULESETS = [
         "bypass_actors": BYPASS,
         "conditions": {
             "ref_name": {
-                "include": ["~DEFAULT_BRANCH", "refs/heads/develop"],
+                "include": [
+                    "~DEFAULT_BRANCH",
+                    "refs/heads/worx",
+                    "refs/heads/develop",
+                ],
                 "exclude": [],
             },
         },
@@ -115,6 +121,7 @@ RULESETS = [
             "ref_name": {
                 "include": ["~ALL"],
                 "exclude": [
+                    "refs/heads/worx",
                     "refs/heads/develop",
                     "refs/heads/main",
                     "refs/heads/master",

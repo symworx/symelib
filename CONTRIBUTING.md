@@ -67,11 +67,14 @@ If you see something that needs fixing, feel free to open a PR directly—no nee
    make test
    ```
 
-7. **Commit** with clear, descriptive messages; push and open a Pull Request to **`develop`**.
+7. **Commit** with clear, descriptive messages; push and open a Pull Request to **`worx`** (**SymWorx org standard**, GitHub Flow).
 
-   GitHub Actions `CI` runs on `develop` (jobs `fmt` and `check`). Release
-   validation (`release.yml`) runs on PRs into `main`, pushes to `release/**`,
-   and tags `v*`. See [docs/RELEASING.md](docs/RELEASING.md).
+   GitHub Actions `CI` runs on `worx` and `develop` (jobs `fmt` and `check`).
+   Release validation (`release.yml`) runs on pushes to `release/**` and tags
+   `v*` (legacy freeze PRs into `main` still run it). See
+   [docs/RELEASING.md](docs/RELEASING.md).
+
+   Until GitHub renames the default branch, PRs still target **`develop`**.
 
    Hooks auto-fix formatting when possible; re-stage and commit again if they modify files.
    Emergency skip (rare): `git commit --no-verify`.

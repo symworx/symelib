@@ -1,22 +1,21 @@
 # Day-to-day CI.
 #
-# Branch model (same as SymWorx / SymKit / SymSight):
-#   develop → stage → release/vX.Y.Z → main → manual tag vX.Y.Z
-#
-# Day-to-day CI on develop only. stage/main are promotions of that SHA.
+# GitHub Flow (same as SymWorx / SymKit / SymSight):
+#   feature/* ──PR──► worx ──tag──► vX.Y.Z
+# develop stays in the filter until GitHub renames develop → worx.
 # Tag / release.yml re-runs the full gate (and creates the GitHub Release).
-# workflow_dispatch re-runs this gate on a branch (checks only; no publish).
+# workflow_dispatch re-runs this gate (checks only; no publish).
 #
-# Job ids match develop required checks (no `name:` so GitHub reports
+# Job ids match default-branch required checks (no `name:` so GitHub reports
 # fmt / check).
 
 name: CI
 
 on:
   push:
-    branches: [develop]
+    branches: [worx, develop]
   pull_request:
-    branches: [develop]
+    branches: [worx, develop]
   workflow_dispatch:
 
 concurrency:

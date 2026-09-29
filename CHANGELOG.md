@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
+### Changed
+
+### Removed
+
+
+## [0.3.0] - 2026-09-29
+
+### Added
 - Citation-only library records (no PDF): `elib add` accepts a DOI, publisher URL, or PMID and populates metadata via PubMed then Crossref; `--title` / `--author` / `--year` / `--journal` enter a citation by hand. TUI library `n` opens the same flow.
 - Edit title on existing rows: `elib edit --title` and the TUI edit modal (`e`).
 
@@ -61,7 +70,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Version Links
 
-[Unreleased]: https://github.com/symworx/symelib/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/symworx/symelib/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/symworx/symelib/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/symworx/symelib/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/symworx/symelib/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/symworx/symelib/releases/tag/v0.1.0

@@ -7,12 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Citation-only library records (no PDF): `elib add` accepts a DOI, publisher URL, or PMID and populates metadata via PubMed then Crossref; `--title` / `--author` / `--year` / `--journal` enter a citation by hand. TUI library `n` opens the same flow.
+- Edit title on existing rows: `elib edit --title` and the TUI edit modal (`e`).
+
 ### Changed
 - GitHub Flow: default branch is `worx`; releases are tags on `worx` (no `stage` / `main` promotion).
 
 ### Removed
-
-### Added
 
 
 ## [0.2.1] - 2026-09-17

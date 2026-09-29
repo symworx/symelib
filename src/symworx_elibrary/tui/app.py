@@ -20,6 +20,7 @@ from textual.widgets import Input
 from symworx_elibrary.services.db_manager import DatabaseManager
 from symworx_elibrary.tui.keys import GG_TIMEOUT_S, HELP, HOME, QUIT, REFRESH, THEME
 from symworx_elibrary.tui.screens.library import LibraryScreen
+from symworx_elibrary.utils.citation import NO_PDF_MESSAGE, has_local_pdf
 from symworx_elibrary.utils.config import Config
 from symworx_elibrary.utils.open_file import open_path
 
@@ -130,8 +131,20 @@ class ElibApp(App[None]):
         """Re-open SQLite connection layer (picks up imports from other processes)."""
         self.db = DatabaseManager(self.db_path)
 
+    def make_enricher(self):
+        """PubMed → Crossref enricher using the current config (for citation lookup)."""
+        from symworx_elibrary.services.crossref_client import CrossrefClient
+        from symworx_elibrary.services.metadata_enricher import MetadataEnricher
+        from symworx_elibrary.services.ncbi_client import NCBIClient
+
+        ncbi = NCBIClient(email=self.config.ncbi_email, api_key=self.config.ncbi_api_key)
+        crossref = CrossrefClient(mailto=self.config.ncbi_email)
+        return MetadataEnricher(ncbi_client=ncbi, crossref_client=crossref, db_manager=self.db)
+
     def open_pdf(self, file_path: str | Path) -> tuple[bool, str]:
         """Open PDF using current config/env viewer preference (reload config each time)."""
+        if not has_local_pdf(file_path):
+            return False, NO_PDF_MESSAGE
         # Pick up pdf_viewer changes without restarting the TUI
         try:
             self.config = Config.load()
@@ -142,7 +155,7 @@ class ElibApp(App[None]):
 
     def action_help(self) -> None:
         self.notify(
-            "j/k move · h/l · gg/G · / search · o PDF · e edit · "
+            "j/k move · h/l · gg/G · / search · n add · o PDF · e edit · "
             "Alt+? help · Ctrl+H home · Ctrl+R refresh · Alt+l lists · "
             "Alt+i imported · Alt+a list · Alt+s sort · Alt+t theme · Esc Esc / Ctrl+Q quit",
             title="Keys",

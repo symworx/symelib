@@ -298,13 +298,14 @@ class DocumentsMixin:
         authors: list[Author] | None = None,
         publication_year: int | None = None,
         clear_year: bool = False,
+        title: str | None = None,
     ) -> DocumentMetadata | None:
-        """Patch author list and/or publication year; mark source as manual.
+        """Patch title, author list, and/or publication year; mark source as manual.
 
         Omitting a field leaves it unchanged. ``clear_year`` sets publication_year
         to NULL. Does not rename the PDF on disk.
         """
-        if authors is None and publication_year is None and not clear_year:
+        if authors is None and publication_year is None and not clear_year and title is None:
             return self.get_by_id(doc_id)
 
         if publication_year is not None and clear_year:
@@ -315,6 +316,13 @@ class DocumentsMixin:
         current = self.get_by_id(doc_id)
         if current is None:
             return None
+
+        if title is not None:
+            title = title.strip()
+            if not title:
+                raise ValueError("Title is required")
+        else:
+            title = current.title
 
         if authors is not None:
             authors_json = json.dumps([a.model_dump() for a in authors])
@@ -331,7 +339,7 @@ class DocumentsMixin:
         status = classify_metadata_status(
             doi=current.doi,
             pmid=current.pmid,
-            title=current.title,
+            title=title,
             authors_json=authors_json,
             abstract=current.abstract,
         )
@@ -341,6 +349,7 @@ class DocumentsMixin:
             conn.execute(
                 """
                 UPDATE documents SET
+                    title = ?,
                     authors_json = ?,
                     publication_year = ?,
                     metadata_status = ?,
@@ -349,6 +358,7 @@ class DocumentsMixin:
                 WHERE id = ?
                 """,
                 (
+                    title,
                     authors_json,
                     year,
                     status.value,
@@ -362,6 +372,7 @@ class DocumentsMixin:
         logger.info(
             "Manual metadata edit",
             doc_id=doc_id,
+            title_changed=title != current.title,
             authors_changed=authors is not None,
             year=year,
         )

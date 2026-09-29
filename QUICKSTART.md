@@ -24,7 +24,9 @@ elib process --from tmp
 elib search "CRISPR oncology"
 elib search --added-since 7d          # imported in the last 7 days
 # elib search --added-from 2026-08-01 --added-to 2026-08-28
-# elib edit --id 42 --author "Smith, Ada" --year 2021
+# elib add 10.1080/10447318.2024.2383033          # citation-only (DOI/URL lookup)
+# elib add --title "Paper" --author "Smith, Ada" --year 2024
+# elib edit --id 42 --title "Corrected title" --author "Smith, Ada" --year 2021
 
 # 5. Metadata quality + re-enrich incomplete rows
 elib check-metadata
@@ -37,7 +39,7 @@ elib list create "my-project" -d "Working bibliography"
 
 # 7. Interactive TUI
 elib tui
-# Keys: / search · j/k move · o PDF · e edit · Alt+l lists · Ctrl+H home · Ctrl+R refresh
+# Keys: / search · j/k move · n add · o PDF · e edit · Alt+l lists · Ctrl+H home · Ctrl+R refresh
 # Help: Alt+?   Quit: Esc Esc (library root) or Ctrl+Q
 
 # 8. Rebuild the full-text search index after bulk changes

@@ -18,6 +18,7 @@ from symworx_elibrary.models.metadata import MetadataSource, MetadataStatus
 from symworx_elibrary.models.reference import Author, Journal, Reference
 from symworx_elibrary.services.db_manager import DatabaseManager
 from symworx_elibrary.tui.app import ElibApp
+from symworx_elibrary.tui.screens.add import AddCitationModal
 from symworx_elibrary.tui.screens.detail import DetailScreen, EditMetadataModal
 from symworx_elibrary.tui.screens.library import LibraryScreen
 from symworx_elibrary.tui.screens.lists import ListDetailScreen, ListsScreen
@@ -217,7 +218,7 @@ def test_tui_import_window_filters_by_added_date(tui_env):
 
 
 def test_tui_edit_authors_and_year(tui_env):
-    """e (or Alt+e) opens the edit modal; saving updates authors and year on the record."""
+    """e (or Alt+e) opens the edit modal; saving updates title, authors, and year."""
 
     async def body():
         app = ElibApp(db_path=tui_env["db_path"], config=tui_env["config"])
@@ -226,8 +227,10 @@ def test_tui_edit_authors_and_year(tui_env):
             await pilot.press("e")
             await pilot.pause()
             assert isinstance(app.screen, EditMetadataModal)
+            title_in = app.screen.query_one("#edit-title-input", Input)
             authors_in = app.screen.query_one("#edit-authors-input", Input)
             year_in = app.screen.query_one("#edit-year-input", Input)
+            title_in.value = "Radium notes"
             authors_in.value = "Curie, Marie"
             year_in.value = "1898"
             app.screen._save()
@@ -235,11 +238,80 @@ def test_tui_edit_authors_and_year(tui_env):
             assert isinstance(app.screen, LibraryScreen)
             meta = tui_env["db"].get_by_id(tui_env["doc_id"])
             assert meta is not None
+            assert meta.title == "Radium notes"
             assert meta.publication_year == 1898
             assert "Curie" in meta.authors_json
             assert meta.metadata_source.value == "manual"
             table = app.screen.query_one("#docs-table")
             assert table.row_count >= 1
+
+    _run(body())
+
+
+def test_tui_add_citation_manual(tui_env):
+    """n opens the add-citation modal; saving inserts a citation-only row."""
+
+    async def body():
+        app = ElibApp(db_path=tui_env["db_path"], config=tui_env["config"])
+        async with app.run_test(size=(120, 40)) as pilot:
+            assert isinstance(app.screen, LibraryScreen)
+            await pilot.press("n")
+            await pilot.pause()
+            assert isinstance(app.screen, AddCitationModal)
+            app.screen.query_one("#add-title-input", Input).value = "Paywalled HCI paper"
+            app.screen.query_one("#add-authors-input", Input).value = "Smith, Ada"
+            app.screen.query_one("#add-year-input", Input).value = "2024"
+            app.screen.query_one("#add-journal-input", Input).value = "IJHCI"
+            app.screen._save()
+            await pilot.pause()
+            assert isinstance(app.screen, LibraryScreen)
+            rows = tui_env["db"].list_documents()
+            titles = [r.title for r in rows]
+            assert "Paywalled HCI paper" in titles
+            added = next(r for r in rows if r.title == "Paywalled HCI paper")
+            assert added.file_size == 0
+            assert added.publication_year == 2024
+            assert added.metadata_source.value == "manual"
+
+    _run(body())
+
+
+def test_tui_citation_only_open_pdf(tui_env):
+    """o on a citation-only row reports no PDF instead of calling a viewer."""
+    from datetime import date as date_cls
+
+    from symworx_elibrary.models.reference import Author, Journal, Reference
+    from symworx_elibrary.services.citation_add import insert_citation
+    from symworx_elibrary.utils.citation import NO_PDF_MESSAGE
+
+    ref = Reference(
+        pmid="",
+        doi="",
+        title="No PDF here",
+        authors=[Author(last_name="X")],
+        journal=Journal(title="J"),
+        publication_date=date_cls(2020, 1, 1),
+        abstract=None,
+        keywords=[],
+        mesh_terms=[],
+    )
+    meta = insert_citation(
+        tui_env["db"],
+        ref,
+        metadata_source=MetadataSource.manual,
+    )
+
+    async def body():
+        app = ElibApp(db_path=tui_env["db_path"], config=tui_env["config"])
+        async with app.run_test(size=(120, 40)) as pilot:
+            lib = app.screen
+            assert isinstance(lib, LibraryScreen)
+            lib._selected_doc_id = meta.id
+            lib.refresh_docs()
+            await pilot.pause()
+            ok, msg = app.open_pdf(meta.file_path)
+            assert ok is False
+            assert msg == NO_PDF_MESSAGE
 
     _run(body())
 

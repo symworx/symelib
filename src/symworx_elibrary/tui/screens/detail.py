@@ -27,6 +27,7 @@ from symworx_elibrary.utils.authors import (
     parse_authors_editable,
     validate_publication_year,
 )
+from symworx_elibrary.utils.citation import NO_PDF_MESSAGE, has_local_pdf
 
 if TYPE_CHECKING:
     from symworx_elibrary.tui.app import ElibApp
@@ -121,13 +122,18 @@ class DetailScreen(VimMotionMixin, Screen):
             )
 
         # Do not use [link=/abs/path] — Rich markup treats "/" after "=" as invalid.
-        safe_name = _escape_markup(doc.filename)
-        safe_path = _escape_markup(doc.file_path)
-        self.query_one("#detail-file", Static).update(
-            f"[bold]{safe_name}[/bold]\n"
-            f"[dim]{safe_path}[/dim]\n"
-            "[cyan]Press o to open in your PDF viewer[/]"
-        )
+        if not has_local_pdf(doc.file_path):
+            self.query_one("#detail-file", Static).update(
+                f"[bold]Citation only[/bold]\n[dim]{NO_PDF_MESSAGE}[/dim]"
+            )
+        else:
+            safe_name = _escape_markup(doc.filename)
+            safe_path = _escape_markup(doc.file_path)
+            self.query_one("#detail-file", Static).update(
+                f"[bold]{safe_name}[/bold]\n"
+                f"[dim]{safe_path}[/dim]\n"
+                "[cyan]Press o to open in your PDF viewer[/]"
+            )
 
         lists = self.app.db.lists_for_document(self.document_id)
         if lists:
@@ -174,6 +180,9 @@ class DetailScreen(VimMotionMixin, Screen):
         if not path:
             self.notify("No file path on this record", severity="warning")
             return
+        if not has_local_pdf(path):
+            self.notify(NO_PDF_MESSAGE, severity="warning")
+            return
         ok, msg = self.app.open_pdf(path)
         # Multi-line errors: show first line as toast, rest if short
         first = msg.split("\n", 1)[0]
@@ -205,7 +214,7 @@ class DetailScreen(VimMotionMixin, Screen):
 
 
 class EditMetadataModal(ModalScreen[bool | None]):
-    """Edit authors and publication year; returns True if saved."""
+    """Edit title, authors, and publication year; returns True if saved."""
 
     BINDINGS = [
         Binding("escape", "cancel", "Cancel", show=True),
@@ -221,12 +230,12 @@ class EditMetadataModal(ModalScreen[bool | None]):
 
     def compose(self) -> ComposeResult:
         with Vertical(id="edit-meta-dialog"):
-            yield Label("Edit authors and year", id="dialog-title")
-            yield Static("", id="edit-doc-title")
+            yield Label("Edit title, authors, and year", id="dialog-title")
+            yield Input(placeholder="Title", id="edit-title-input")
             yield Input(placeholder="Last, First; Last2, First2", id="edit-authors-input")
             yield Input(placeholder="Year (YYYY, empty to clear)", id="edit-year-input")
             yield Static(
-                "Last, First; …  ·  enter save  ·  esc cancel",
+                "enter save  ·  esc cancel",
                 id="dialog-help",
             )
 
@@ -236,18 +245,23 @@ class EditMetadataModal(ModalScreen[bool | None]):
             self.notify("Document not found", severity="error")
             self.dismiss(None)
             return
-        self.query_one("#edit-doc-title", Static).update((doc.title or "")[:80])
+        title_inp = self.query_one("#edit-title-input", Input)
+        title_inp.value = doc.title or ""
         authors_inp = self.query_one("#edit-authors-input", Input)
         authors_inp.value = format_authors_editable(doc.authors_json)
         year_inp = self.query_one("#edit-year-input", Input)
         year_inp.value = str(doc.publication_year) if doc.publication_year else ""
-        authors_inp.focus()
+        title_inp.focus()
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
-        if event.input.id in ("edit-authors-input", "edit-year-input"):
+        if event.input.id in ("edit-title-input", "edit-authors-input", "edit-year-input"):
             self._save()
 
     def _save(self) -> None:
+        raw_title = self.query_one("#edit-title-input", Input).value.strip()
+        if not raw_title:
+            self.notify("Title is required", severity="warning")
+            return
         raw_authors = self.query_one("#edit-authors-input", Input).value
         raw_year = self.query_one("#edit-year-input", Input).value.strip()
         try:
@@ -271,6 +285,7 @@ class EditMetadataModal(ModalScreen[bool | None]):
         try:
             updated = self.app.db.update_document_fields(
                 self.document_id,
+                title=raw_title,
                 authors=authors,
                 publication_year=year,
                 clear_year=clear_year,
@@ -281,7 +296,7 @@ class EditMetadataModal(ModalScreen[bool | None]):
         if updated is None:
             self.notify("Update failed", severity="error")
             return
-        self.notify("Saved authors and year", severity="information")
+        self.notify("Saved title, authors, and year", severity="information")
         self.dismiss(True)
 
     def action_cancel(self) -> None:
